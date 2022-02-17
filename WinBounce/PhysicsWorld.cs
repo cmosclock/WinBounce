@@ -12,8 +12,8 @@ public class PhysicsWorld
     private readonly double _width;
     private readonly double _height;
     private readonly List<PhysicsEntity> _entities = new ();
-    //private readonly double _gravity = -10;
-    private readonly double _gravity = 0;
+    private readonly double _gravity = -10;
+    // private readonly double _gravity = 0;
     private readonly double _maxVelocity = 100;
 
     public PhysicsWorld(double width, double height)
@@ -69,64 +69,69 @@ public class PhysicsWorld
 
             // collide box
             var collideEntities = _entities.Where(e => e.Id != entity.Id && e.Intersect(entity)).ToList();
-            var collideEntitiesY = collideEntities.Where(e => e.IntersectY(entity)).ToList();
+            var collideEntitiesY = collideEntities.Where(e => e.IntersectPrimaryAxis(entity).isY).ToList();
+            var collideEntitiesX = collideEntities.Where(e => e.IntersectPrimaryAxis(entity).isX).ToList();
             
             entity.Y += entity.VelocityY;
+            foreach (var collideEntity in collideEntitiesY)
+            {
+                var sign = collideEntity.CenterY > entity.CenterY ? 1 : -1;
+                collideEntity.VelocityY += sign * Math.Abs(collideEntitiesY.Sum(e => e.VelocityY) + entity.VelocityY) / (collideEntitiesY.Count + 1);
+            }
             // collide floor
-            if (entity.Y >= maxY || entity.Y <= minY)
+            if (entity.Y >= maxY || entity.Y <= minY || collideEntitiesY.Any())
             {
                 entity.VelocityY *= -0.4;
                 // friction
                 entity.VelocityX *= 0.3;
             }
-            var collideMaxValueOnBottom = collideEntitiesY
-                .SelectMany(e => new List<double> {e.Bottom, e.Top})
-                .Where(y => y < entity.CenterY)
-                .Select(y => y - entity.Height)
-                .DefaultIfEmpty(minY)
-                .Max();
-            var collideMinValueOnTop = collideEntitiesY
-                .SelectMany(e => new List<double> {e.Bottom, e.Top})
-                .Where(y => y > entity.CenterY)
-                .DefaultIfEmpty(maxY)
-                .Min();
-            //entity.Y = Math.Clamp(entity.Y, Math.Max(minY, collideMaxValueOnBottom), Math.Min(maxY, collideMinValueOnTop));
-            entity.Y = Math.Clamp(entity.Y, minY, maxY);
-            foreach (var collideEntity in collideEntitiesY)
-            {
-                var sign = (collideEntity.CenterY > entity.CenterY ? 1 : -1);
-                collideEntity.VelocityY += sign * Math.Abs(collideEntitiesY.Sum(e => e.VelocityY) + entity.VelocityY) / (collideEntitiesY.Count + 1);
-            }
 
             // collide box
-            var collideEntitiesX = collideEntities.Where(e => e.IntersectX(entity)).ToList();
             entity.X += entity.VelocityX;
-            // collide wall
-            if (entity.X >= maxX || entity.X <= minX)
-            {
-                entity.VelocityX *= -0.4;
-                // friction
-                entity.VelocityY *= 0.3;
-            }
-            // clamp x
-            var collideMaxValueOnLeft = collideEntitiesX
-                .SelectMany(e => new List<double> {e.Left, e.Right})
-                .Where(x => x < entity.CenterX)
-                .DefaultIfEmpty(minX)
-                .Max();
-            var collideMinValueOnRight = collideEntitiesX
-                .SelectMany(e => new List<double> {e.Left, e.Right})
-                .Where(x => x > entity.CenterX)
-                .Select(x => x + entity.Width)
-                .DefaultIfEmpty(maxX)
-                .Min();
-            //entity.X = Math.Clamp(entity.X, Math.Max(minX, collideMaxValueOnLeft), Math.Min(maxX, collideMinValueOnRight));
-            entity.X = Math.Clamp(entity.X, minX, maxX);
             foreach (var collideEntity in collideEntitiesX)
             {
                 var sign = (collideEntity.CenterX > entity.CenterX ? 1 : -1);
                 collideEntity.VelocityX += sign * Math.Abs(collideEntitiesX.Sum(e => e.VelocityX) + entity.VelocityX) / (collideEntitiesX.Count + 1);
             }
+            // collide wall
+            if (entity.X >= maxX || entity.X <= minX || collideEntitiesX.Any())
+            {
+                entity.VelocityX *= -0.4;
+                // friction
+                entity.VelocityY *= 0.3;
+            }
+
+            // for each collider, 
+            var collideMaxValueOnLeft = collideEntitiesX
+                .Where(e => e.CenterX < entity.CenterX)
+                .Select(e => e.Right)
+                .DefaultIfEmpty(minX)
+                .Max();
+            var collideMinValueOnRight = collideEntitiesX
+                .Where(e => e.CenterX > entity.CenterX)
+                .Select(e => e.Left - entity.Width)
+                .DefaultIfEmpty(maxX)
+                .Min();
+            var minComputedX = Math.Max(minX, collideMaxValueOnLeft);
+            var maxComputedX = Math.Min(maxX, collideMinValueOnRight);
+            entity.X = maxComputedX > minComputedX
+                ? Math.Clamp(entity.X, minComputedX, maxComputedX)
+                : minComputedX;
+            var collideMaxValueOnBottom = collideEntitiesY
+                .Where(e => e.CenterY < entity.CenterY)
+                .Select(e => e.Top + entity.Height)
+                .DefaultIfEmpty(minY)
+                .Max();
+            var collideMinValueOnTop = collideEntitiesY
+                .Where(e => e.CenterY > entity.CenterY)
+                .Select(e => e.Bottom)
+                .DefaultIfEmpty(maxY)
+                .Min();
+            var minComputedY = Math.Max(minY, collideMaxValueOnBottom);
+            var maxComputedY = Math.Min(maxY, collideMinValueOnTop);
+            entity.Y = maxComputedY > minComputedY
+                ? Math.Clamp(entity.Y, minComputedY, maxComputedY)
+                : minComputedY;
         }
     }
 

@@ -1,3 +1,5 @@
+using System;
+
 namespace WinBounce;
 
 public class PhysicsEntity
@@ -17,8 +19,8 @@ public class PhysicsEntity
     public bool Held { get; set; }
     public double Left => X;
     public double Right => X + Width;
-    public double Top => Y + Height;
-    public double Bottom => Y;
+    public double Top => Y;
+    public double Bottom => Y - Height;
     public PhysicsEntity(string id, double x, double y, double width, double height)
     {
         Id = id;
@@ -31,6 +33,12 @@ public class PhysicsEntity
     public (double x, double y, double width, double height) GetCoord() => (X, Y, Width, Height);
     public double CenterX => Left + Right / 2;
     public double CenterY => Top + Bottom / 2;
+
+    public (bool isX, bool isY) IntersectPrimaryAxis(PhysicsEntity entity)
+    {
+        var isY = Math.Atan(Width / Height) >= Math.Atan(Math.Abs(CenterX - entity.CenterX) / Math.Abs(CenterY - entity.CenterY));
+        return (!isY, isY);
+    }
 
     public bool Intersect(PhysicsEntity entity)
     {

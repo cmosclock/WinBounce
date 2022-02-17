@@ -89,6 +89,11 @@ namespace WinBounce
         public void Cleanup(object? self, EventArgs? _)
         {
             _notifyIcon.Visible = false;
+            foreach (var hWnd in _hWndList)
+            {
+                User32.SetWindowPos(hWnd, HWND.HWND_NOTOPMOST, 0, 0, 0, 0,
+                    User32.SetWindowPosFlags.SWP_NOMOVE | User32.SetWindowPosFlags.SWP_NOSIZE);
+            }
             foreach (var proc in _processes)
             {
                 proc.Kill();
@@ -122,11 +127,16 @@ namespace WinBounce
         public void CheckProcesses()
         {
             var processes = Process.GetProcessesByName("notepad").ToList();
-            var newHwndList = processes.Select(p => p.MainWindowHandle).ToList();
+            var newHwndList = processes
+                .Select(p => p.MainWindowHandle)
+                .Where(ptr => !User32.IsIconic(ptr))
+                .ToList();
             foreach (var hWnd in newHwndList.Except(_hWndList).ToList())
             {
                 User32.GetWindowRect(hWnd, out var rect);
                 _physicsWorld.AddEntity($"{hWnd}", rect.left, ScreenHeight - rect.top, rect.Width, rect.Height);
+                User32.SetWindowPos(hWnd, HWND.HWND_TOPMOST, 0, 0, 0, 0,
+                    User32.SetWindowPosFlags.SWP_NOMOVE | User32.SetWindowPosFlags.SWP_NOSIZE);
                 var targetThreadId = User32.GetWindowThreadProcessId(hWnd, out var pId);
                 User32.SetWinEventHook(
                     User32.EventConstants.EVENT_SYSTEM_MOVESIZESTART,
