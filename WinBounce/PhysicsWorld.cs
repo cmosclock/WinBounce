@@ -141,9 +141,9 @@ public class PhysicsWorld
         if (entity == null) return;
         
         // compute acceleration
-        var newVelocityX = x - entity.X;
+        var newVelocityX = (x - entity.X) * 2;
         entity.VelocityX = PhysicsUtils.Lerp(entity.VelocityX, newVelocityX, 0.5);
-        var newVelocityY = y - entity.Y;
+        var newVelocityY = (y - entity.Y) * 2;
         entity.VelocityY = PhysicsUtils.Lerp(entity.VelocityY, newVelocityY, 0.5);
         
         entity.X = x;
