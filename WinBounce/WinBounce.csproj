@@ -6,11 +6,17 @@
         <Nullable>enable</Nullable>
         <UseWPF>true</UseWPF>
         <UseWindowsForms>true</UseWindowsForms>
+        <ApplicationIcon>ピーシェ_ネットワーク.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Vanara.PInvoke.DwmApi" Version="3.3.15" />
       <PackageReference Include="Vanara.PInvoke.User32" Version="3.3.15" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="ピーシェ_ネットワーク.ico" />
+      <EmbeddedResource Include="ピーシェ_ネットワーク.ico" />
     </ItemGroup>
 
 </Project>

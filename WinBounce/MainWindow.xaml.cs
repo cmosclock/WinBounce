@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using Vanara.PInvoke;
@@ -31,9 +33,11 @@ namespace WinBounce
             Hide();
             // https://stackoverflow.com/questions/69102624/executionengineexception-on-lowlevel-keyboard-hook
             _targetMovedProc = TargetMoved;
-            _notifyIcon.Icon = new Icon(@"D:\SteamLibrary\steamapps\common\Hyperdimension Neptunia Re;Birth3\DeluxeSet\PC THEME\ICONS\ピーシェ_ネットワーク.ico");
+            var assembly = typeof(MainWindow).GetTypeInfo().Assembly;
+            var resource = assembly.GetManifestResourceStream("WinBounce.ピーシェ_ネットワーク.ico");
+            _notifyIcon.Icon = new Icon(resource);
             _notifyIcon.Visible = true;
-            _notifyIcon.ShowBalloonTip(5000, "WinBounce.", "WinBounce is running in the background",  System.Windows.Forms.ToolTipIcon.Info);
+            _notifyIcon.ShowBalloonTip(5000, "WinBounce.", "WinBounce is running in the background",  ToolTipIcon.Info);
             _notifyIcon.ContextMenuStrip = new ContextMenuStrip();
             var quitBtn = new ToolStripMenuItem("Exit?");
             _notifyIcon.ContextMenuStrip.Items.Add(quitBtn);
